@@ -7,40 +7,37 @@
 #### Settings which need to be adapted by user #####
 ####################################################
 source ${HOME}/miniconda3/etc/profile.d/conda.sh
-project="2021_Fortin_GT21" # $1 # Call script using project name as the only argument
+
+project="Gill-iPSC" # $1 # Call script using project name as the only argument
 # Specify the directory for the output
-OUTPUT_DIR="${HOME}/shared/projects/${project}/data/output/"
+OUTPUT_DIR="/data/fm346/ngs/reprogramming/${project}/data/output/"
 # Specify location of input fastq files. ALL FILES IN THE FOLDER WILL BE PROCESSED 
-RAW_SAMPLE_DIR="${HOME}/shared/projects/${project}/data/raw/"
+RAW_SAMPLE_DIR="/data/fm346/ngs/reprogramming/Gill-iPSC/data/fastq/"
 # Specify extention of input files (".fastq" or ".fastq.gz") 
 SUFFIX_INPUTFILES='.fastq.gz'
 # Specify the sequencing type (RNASeq or TempOSeq)
-SEQTYPE="TempOSeq"
+SEQTYPE="RNASeq"
 # Specify the sequencing mode used to obtain the data
-SEQMODE="single" #specify "paired" or "single" end mode
+SEQMODE="paired" #specify "paired" or "single" end mode
 # Specify the read suffix (e.g. "_R1_001")
-PAIRED_END_SUFFIX_FORWARD="_R1_001"
+PAIRED_END_SUFFIX_FORWARD="_1"
 # *IF* paired end mode was used, specify the reverse suffix as well (e.g. "_R2")
-PAIRED_END_SUFFIX_REVERSE="_R2_001"
+PAIRED_END_SUFFIX_REVERSE="_2"
 
 # Choose the main organism for genome alignment (e.g "Rat_6.0.97"). {NOTE: This ID is a label specific for this script and is made for the user to identify which genome version was used. It can contain any text}.
 # hg38 | Rat_6.0.84 | S1500 | HumanWT
-ORGANISM_GENOME_ID="S1500"
+ORGANISM_GENOME_ID="h38.p14"
 # PATH/Directory in which the genome files are located
 # ${HOME}/shared/dbs/human/hg38/ | ${HOME}/shared/dbs/rat/ensembl/rnor6_0/v84/genome
 # ${HOME}/shared/dbs/biospyder/R-Scripts/Human_S1500_Surrogate/TSQR_Scripts_Human_Surrogate_1.2/reference/humansurrogate1_2
 # ${HOME}/shared/dbs/biospyder/R-Scripts/Human_Whole_Transcriptome/TSQR_Scripts_HumanWT_1.1/reference/humanwt1_1
 GENOME_FILES_DIR="${HOME}/shared/dbs/biospyder/R-Scripts/Human_S1500_Surrogate/TSQR_Scripts_Human_Surrogate_1.2/reference/humansurrogate1_2"
 # Filename of genome fasta file (without path)
-# Homo_sapiens_assembly38.fasta | Rnor_6.0.fa 
-# S1500: humansurrogate1_2.fa
-# Human WT: humanwt1_1.fa
-GENOME_FILE_NAME="humansurrogate1_2.fa"
+# GRCh38.p14.genome.fa
+GENOME_FILE_NAME="GRCh38.p14.genome.fa"
 # Filename of GTF file (without path)
-# hg38.ensGene.gtf | Rattus_norvegicus.Rnor_6.0.84.andERCC.gtf
-# S1500: humansurrogate1_2.gtf
-# Human WT: humanwt1_1.gtf
-GTF_FILE_NAME="humansurrogate1_2.gtf"
+# GRCh38.p14.gencode.v47.basic.annotation.gtf
+GTF_FILE_NAME="GRCh38.p14.gencode.v47.basic.annotation.gtf"
 # Whether the genome indexing has already been done. When "Yes" is specified, the indexing will be skipped. If "No" The index will be made
 GENOME_INDEX_ALREADY_AVAILABLE="Yes" #Specify "Yes" or "No"
 RSEM_INDEX_ALREADY_AVAILABLE="Yes" #Specify "Yes" or "No"
