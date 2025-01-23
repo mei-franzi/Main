@@ -24,14 +24,15 @@ PAIRED_END_SUFFIX_FORWARD="_1"
 # *IF* paired end mode was used, specify the reverse suffix as well (e.g. "_R2")
 PAIRED_END_SUFFIX_REVERSE="_2"
 
-# Choose the main organism for genome alignment (e.g "Rat_6.0.97"). {NOTE: This ID is a label specific for this script and is made for the user to identify which genome version was used. It can contain any text}.
+# Choose the main organism for genome alignment (e.g "Rat_6.0.97"). {NOTE: This ID is a label specific for this script and is made for 
+# the user to identify which genome version was used. It can contain any text}.
 # hg38 | Rat_6.0.84 | S1500 | HumanWT
 ORGANISM_GENOME_ID="h38.p14"
 # PATH/Directory in which the genome files are located
-# ${HOME}/shared/dbs/human/hg38/ | ${HOME}/shared/dbs/rat/ensembl/rnor6_0/v84/genome
+# /data/fm346/ngs/databases/human
 # ${HOME}/shared/dbs/biospyder/R-Scripts/Human_S1500_Surrogate/TSQR_Scripts_Human_Surrogate_1.2/reference/humansurrogate1_2
 # ${HOME}/shared/dbs/biospyder/R-Scripts/Human_Whole_Transcriptome/TSQR_Scripts_HumanWT_1.1/reference/humanwt1_1
-GENOME_FILES_DIR="${HOME}/shared/dbs/biospyder/R-Scripts/Human_S1500_Surrogate/TSQR_Scripts_Human_Surrogate_1.2/reference/humansurrogate1_2"
+GENOME_FILES_DIR="/data/fm346/ngs/databases/human"
 # Filename of genome fasta file (without path)
 # GRCh38.p14.genome.fa
 GENOME_FILE_NAME="GRCh38.p14.genome.fa"
@@ -39,16 +40,17 @@ GENOME_FILE_NAME="GRCh38.p14.genome.fa"
 # GRCh38.p14.gencode.v47.basic.annotation.gtf
 GTF_FILE_NAME="GRCh38.p14.gencode.v47.basic.annotation.gtf"
 # Whether the genome indexing has already been done. When "Yes" is specified, the indexing will be skipped. If "No" The index will be made
-GENOME_INDEX_ALREADY_AVAILABLE="Yes" #Specify "Yes" or "No"
-RSEM_INDEX_ALREADY_AVAILABLE="Yes" #Specify "Yes" or "No"
+# running pipeline first time, No index 
+GENOME_INDEX_ALREADY_AVAILABLE="No" #Specify "Yes" or "No"
+RSEM_INDEX_ALREADY_AVAILABLE="No" #Specify "Yes" or "No"
 #Specify whether you are working with a large (=human) genome. Specify "Yes" when working with human or "No"
 LARGE_GENOME="Yes"
 
 # System parameters
 # Specify amount of CPUs to use for alignment step (use 20 or 30)
-CPU_FOR_ALIGNMENT=40 
+CPU_FOR_ALIGNMENT=10
 # Specify amount of CPUs to use (use 6 or higher)
-CPU_FOR_OTHER=40
+CPU_FOR_OTHER=6
 
 ### No other input required ###
 
@@ -78,7 +80,7 @@ declare GENOME="${GENOMEDIR}/${GENOME_FILE_NAME}"  #genome fasta file
 declare	GTF="${GENOMEDIR}/${GTF_FILE_NAME}"   #genome GTF file
 declare GenomeID=${ORGANISM_GENOME_ID}  #Specify the genome name (e.g. Species+GenomeVersion or Species+DownloadDate) to prevent overwriting other indexed genomes
 
-declare LargeGenome="No"     #Specify "Yes" or "No" to indicate if Human=Large Genome is used
+declare LargeGenome="Yes"     #Specify "Yes" or "No" to indicate if Human=Large Genome is used
 #Specify "Yes" or "No" to indicate if GenomeIndexing has already been done for STAR (if no is specified, the index will be made)
 GenomeIndexDone=${GENOME_INDEX_ALREADY_AVAILABLE}
 #Specify "Yes" or "No" to indicate if GenomeIndexing has already been done for RSEM (if no is specified, the index will be made)
