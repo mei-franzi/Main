@@ -101,8 +101,8 @@ declare QC_DIR_multiQC="${OUTPUTDIR}/MultiQC/"
 declare align_DIR="${OUTPUTDIR}/STAR/"
 declare Quant_DIR="${OUTPUTDIR}/RSEM/"
 declare RSEM_GENOMEDIR="${GENOMEDIR}/RSEM/"
-declare TEMPOSEQR="${HOME}/shared/projects/${project}/scripts/pete.star.script_v3.1.R"
-declare TEMPOSEQFIGS="${HOME}/shared/projects/${project}/scripts/generate_figures.R"
+#declare TEMPOSEQR="${HOME}/shared/projects/${project}/scripts/pete.star.script_v3.1.R"
+#declare TEMPOSEQFIGS="${HOME}/shared/projects/${project}/scripts/generate_figures.R"
 
 declare SUFFIX1=${SUFFIX_IN}
 declare SUFFIX_out="_trimmed${SUFFIX_IN}"
@@ -127,7 +127,7 @@ echo $SHELL
 echo "Activating required software."
 if [ ${SEQTYPE} == "TempOSeq" ]
 then
-  conda activate rnaseq
+  conda activate odaf
   #conda activate odaf-star2.7.1 # If genome index is a different version...
 elif [ ${SEQTYPE} == "RNASeq" ]
 then
@@ -384,7 +384,7 @@ fi
 
 # Running multiQC on fastp-output
 # multiqc ${QC_DIR_fastp} --filename MultiQC_Report.html --outdir ${QC_DIR_multiQC}
-multiqc --cl_config "extra_fn_clean_exts: { '_fastp.json' }" ${BASEDIR} --filename MultiQC_Report.html --outdir ${QC_DIR_multiQC}
+multiqc --cl-config "extra_fn_clean_exts: { '_fastp.json' }" ${BASEDIR} --filename MultiQC_Report.html --outdir ${QC_DIR_multiQC}
 
 ###################################################################################################
 
