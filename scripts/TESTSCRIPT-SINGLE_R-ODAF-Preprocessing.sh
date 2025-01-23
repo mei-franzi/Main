@@ -48,8 +48,7 @@ CPU_FOR_OTHER=6
 #################################
 
 declare BASEDIR=${OUTPUT_DIR}   #specify working directory
-#declare SEQMODE="single"   #specify "paired" or "single" end mode
-#declare RAW_SAMPLE_DIR=${BASEDIR}   #specify location of fastq files
+
 if [[ "${SUFFIX_INPUTFILES}" =~ ^\. ]]
  then echo "Suffix has a leading period, continuing."
  else 
@@ -90,8 +89,6 @@ declare QC_DIR_multiQC="${OUTPUTDIR}/MultiQC/"
 declare align_DIR="${OUTPUTDIR}/STAR/"
 declare Quant_DIR="${OUTPUTDIR}/RSEM/"
 declare RSEM_GENOMEDIR="${GENOMEDIR}/RSEM/"
-#declare TEMPOSEQR="${HOME}/shared/projects/${project}/scripts/pete.star.script_v3.1.R"
-#declare TEMPOSEQFIGS="${HOME}/shared/projects/${project}/scripts/generate_figures.R"
 
 declare SUFFIX1=${SUFFIX_IN}
 declare SUFFIX_out="_trimmed${SUFFIX_IN}"
