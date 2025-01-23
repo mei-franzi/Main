@@ -127,11 +127,11 @@ echo $SHELL
 echo "Activating required software."
 if [ ${SEQTYPE} == "TempOSeq" ]
 then
-  conda activate odaf
+  conda activate rnaseq
   #conda activate odaf-star2.7.1 # If genome index is a different version...
 elif [ ${SEQTYPE} == "RNASeq" ]
 then
-  conda activate odaf
+  conda activate rnaseq
 else
   echo "Sequencing type not recognized. Quitting."
   break
