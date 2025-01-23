@@ -6,7 +6,7 @@
 ####################################################
 #### Settings which need to be adapted by user #####
 ####################################################
-source ${HOME}/miniconda3/etc/profile.d/conda.sh
+source /home/fm346/miniconda3/etc/profile.d/conda.sh
 
 project="Gill-iPSC" # $1 # Call script using project name as the only argument
 # Specify the directory for the output
