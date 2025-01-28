@@ -35,8 +35,8 @@ GENOME_FILE_NAME="GRCh38.p14.genome.fa"
 # Filename of GTF file (without path)
 GTF_FILE_NAME="GRCh38.p14.gencode.v47.basic.annotation.gtf"
 # Whether the genome indexing has already been done. If "Yes", indexing will be skipped. If "No", index will be made
-GENOME_INDEX_ALREADY_AVAILABLE="Yes" #Specify "Yes" or "No"
-RSEM_INDEX_ALREADY_AVAILABLE="Yes" #Specify "Yes" or "No"
+GENOME_INDEX_ALREADY_AVAILABLE="No" #Specify "Yes" or "No"
+RSEM_INDEX_ALREADY_AVAILABLE="No" #Specify "Yes" or "No"
 #Specify whether you are working with a large (=human) genome. Specify "Yes" when working with human or "No"
 LARGE_GENOME="Yes"
 
