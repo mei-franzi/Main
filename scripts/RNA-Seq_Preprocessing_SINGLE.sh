@@ -21,15 +21,15 @@ SEQTYPE="RNASeq"
 # Specify the sequencing mode used to obtain the data
 SEQMODE="single" #specify "paired" or "single" end mode
 # Specify the read suffix (e.g. "_R1_001")
-PAIRED_END_SUFFIX_FORWARD="_1"
+PAIRED_END_SUFFIX_FORWARD=""
 # *IF* paired end mode was used, specify the reverse suffix as well (e.g. "_R2")
-PAIRED_END_SUFFIX_REVERSE="_2"
+PAIRED_END_SUFFIX_REVERSE=""
 
 # Choose the main organism for genome alignment {NOTE: This ID is a label for the user to identify which genome version was used. 
 # It can contain any text}.
 ORGANISM_GENOME_ID="h38.p14"
 # PATH/Directory in which the genome files are located
-GENOME_FILES_DIR="/data/fm346/ngs/databases/human"
+GENOME_FILES_DIR="/data/fm346/ngs/databases/human/new_genome_index"
 # Filename of genome fasta file (without path)
 GENOME_FILE_NAME="GRCh38.p14.genome.fa"
 # Filename of GTF file (without path)
