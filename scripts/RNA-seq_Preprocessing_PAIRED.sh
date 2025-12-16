@@ -2,12 +2,11 @@
 
 ### Sequencing R-ODAF, Omics Data Analysis Framework for Regulatory application  ###
 
-source /home/fm346/miniconda3/etc/profile.d/conda.sh
 conda activate rnaseq
 
-project="aorta-GSE235161" # $1 # Call script using project name as the only argument
-OUTPUT_DIR="/data/fm346/ngs/repurposing/${project}/data/output/" # output directory
-RAW_SAMPLE_DIR="/data/fm346/ngs/repurposing/${project}/data/fastq/" # directory storing fastq files
+project="rat-aging" # $1 # Call script using project name as the only argument
+OUTPUT_DIR="/data/fm346/ngs/${project}/data/output/" # output directory
+RAW_SAMPLE_DIR="/data/fm346/ngs/${project}/data/fastq/" # directory storing fastq files
 SUFFIX_INPUTFILES='.fastq.gz'
 SEQTYPE="RNASeq"
 SEQMODE="paired" # "paired" or "single" end mode
@@ -16,17 +15,18 @@ PAIRED_END_SUFFIX_REVERSE="_2"
 
 # Choose organism for genome alignment {NOTE: This ID is a label specific for this script and is made for 
 # the user to identify which genome version was used. It can contain any text}.
-ORGANISM_GENOME_ID="h38.p14"
+# mRatBN7.2.dna.toplevel.fa
+ORGANISM_GENOME_ID="mRatBN7.2"
 # PATH/Directory in which the genome files are located
-GENOME_FILES_DIR="/data/fm346/ngs/repurposing/databases"
+GENOME_FILES_DIR="/data/fm346/ngs/rat-aging/databases/rat_STAR_index"
 # Filename of genome fasta file (without path)
-GENOME_FILE_NAME="GRCh38.p14.genome.fa"
+GENOME_FILE_NAME="Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa"
 # Filename of GTF file (without path)
-GTF_FILE_NAME="GRCh38.p14.gencode.v47.basic.annotation.gtf"
+GTF_FILE_NAME="Rattus_norvegicus.mRatBN7.2.110.gtf"
 # Whether the genome indexing has already been done. When "Yes". the indexing will be skipped. If "No" The index will be made
 GENOME_INDEX_ALREADY_AVAILABLE="No" 
 RSEM_INDEX_ALREADY_AVAILABLE="No"
-LARGE_GENOME="Yes" #"Yes" when working with human or "No" if any other genome
+LARGE_GENOME="No" #"Yes" when working with human or "No" if any other genome
 
 # System parameters
 CPU_FOR_ALIGNMENT=10 # n CPUs to use for alignment step 
