@@ -1,277 +1,163 @@
 #!/bin/bash
 
-### Sequencing R-ODAF, Omics Data Analysis Framework for Regulatory application  ###
+### Sequencing R-ODAF, Omics Data Analysis Framework for Regulatory application ###
 
-conda activate rnaseq
+# Load environment
+# conda activate rnaseq # Ensure this is active before running or uncomment if supported
 
-project="rat-aging" # $1 # Call script using project name as the only argument
-OUTPUT_DIR="/data/fm346/ngs/${project}/data/output/" # output directory
-RAW_SAMPLE_DIR="/data/fm346/ngs/${project}/data/fastq/" # directory storing fastq files
+project="rat-aging"
+OUTPUT_DIR="/data/fm346/ngs/${project}/data/output"
+RAW_SAMPLE_DIR="/data/fm346/ngs/${project}/data/fastq/"
 SUFFIX_INPUTFILES='.fastq.gz'
 SEQTYPE="RNASeq"
-SEQMODE="paired" # "paired" or "single" end mode
-PAIRED_END_SUFFIX_FORWARD="_1" # paired-end: specify read suffix 
+SEQMODE="paired"
+PAIRED_END_SUFFIX_FORWARD="_1"
 PAIRED_END_SUFFIX_REVERSE="_2"
 
-# Choose organism for genome alignment {NOTE: This ID is a label specific for this script and is made for 
-# the user to identify which genome version was used. It can contain any text}.
-# mRatBN7.2.dna.toplevel.fa
 ORGANISM_GENOME_ID="mRatBN7.2"
-# PATH/Directory in which the genome files are located
 GENOME_FILES_DIR="/data/fm346/ngs/rat-aging/databases/rat_STAR_index"
-# Filename of genome fasta file (without path)
 GENOME_FILE_NAME="Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa"
-# Filename of GTF file (without path)
 GTF_FILE_NAME="Rattus_norvegicus.mRatBN7.2.110.gtf"
-# Whether the genome indexing has already been done. When "Yes". the indexing will be skipped. If "No" The index will be made
+
 GENOME_INDEX_ALREADY_AVAILABLE="No" 
 RSEM_INDEX_ALREADY_AVAILABLE="No"
-LARGE_GENOME="No" #"Yes" when working with human or "No" if any other genome
+LARGE_GENOME="Yes" # Set to Yes for Rat (mammalian genomes are 'Large' for STAR)
 
 # System parameters
-CPU_FOR_ALIGNMENT=10 # n CPUs to use for alignment step 
-CPU_FOR_OTHER=6 # n CPUs to use (use 6 or higher)
+CPU_FOR_ALIGNMENT=10
+CPU_FOR_OTHER=6
 
-### No other input required ###
+#######################################################################
+### Variables Setup
+#######################################################################
 
-# Running Preprocessing #
-
-declare BASEDIR=${OUTPUT_DIR}   #specify working directory
-if [[ "${SUFFIX_INPUTFILES}" =~ ^\. ]]
- then echo "Suffix has a leading period, continuing."
- else 
- echo "Suffix did not have a leading period, adding one now..."
- SUFFIX_INPUTFILES=${SUFFIX_INPUTFILES/#/.}
- echo ${SUFFIX_INPUTFILES}
-fi
-declare SUFFIX_IN=${SUFFIX_INPUTFILES} # specify extension of input files (".fastq", ".fastq.gz", etc.)
-
-#For paired end mode: specify the SUFFIXES used for read1 and read2 
+declare BASEDIR=${OUTPUT_DIR}
+declare SUFFIX_IN=${SUFFIX_INPUTFILES}
 declare PAIR1=${PAIRED_END_SUFFIX_FORWARD}
 declare PAIR2=${PAIRED_END_SUFFIX_REVERSE}
 
-#Specify reference genome files
-declare GENOMEDIR=${GENOME_FILES_DIR}       #location of genome files
-declare GENOME="${GENOMEDIR}/${GENOME_FILE_NAME}"  #genome fasta file
-declare	GTF="${GENOMEDIR}/${GTF_FILE_NAME}"   #genome GTF file
-declare GenomeID=${ORGANISM_GENOME_ID}  #Specify the genome name (e.g. Species+GenomeVersion or Species+DownloadDate) to prevent overwriting other indexed genomes
+declare GENOMEDIR=${GENOME_FILES_DIR}
+declare GENOME="${GENOMEDIR}/${GENOME_FILE_NAME}"
+declare GTF="${GENOMEDIR}/${GTF_FILE_NAME}"
+declare GenomeID=${ORGANISM_GENOME_ID}
 
-declare LargeGenome="Yes"     #Specify "Yes" or "No" to indicate if Human=Large Genome is used
-#Specify "Yes" or "No" to indicate if GenomeIndexing has already been done for STAR (if no is specified, the index will be made)
-GenomeIndexDone=${GENOME_INDEX_ALREADY_AVAILABLE}
-#Specify "Yes" or "No" to indicate if GenomeIndexing has already been done for RSEM (if no is specified, the index will be made)
-GenomeIndexRSEMDone=${RSEM_INDEX_ALREADY_AVAILABLE}
-
-declare CPUs=${CPU_FOR_OTHER}   #Specify amount of CPUs to use
-declare CPUs_align=${CPU_FOR_ALIGNMENT}   #Specify amount of CPUs to use for alignment step
-
-#######################################################################
-### Defining parameters for script to run (no user input necessary) ### 
-#######################################################################
-
-declare SOURCEDIR=${RAW_SAMPLE_DIR}
 declare TRIMM_DIR="${BASEDIR}/Trimmed_reads/"
-declare OUTPUTDIR=${TRIMM_DIR}
-declare QC_DIR_fastp="${OUTPUTDIR}/fastpQCoutput/"
-declare QC_DIR_multiQC="${OUTPUTDIR}/MultiQC/"
-declare align_DIR="${OUTPUTDIR}/STAR/"
-declare Quant_DIR="${OUTPUTDIR}/RSEM/"
+declare QC_DIR_fastp="${TRIMM_DIR}/fastpQCoutput/"
+declare QC_DIR_multiQC="${TRIMM_DIR}/MultiQC/"
+declare align_DIR="${TRIMM_DIR}/STAR/"
+declare Quant_DIR="${TRIMM_DIR}/RSEM/"
 declare RSEM_GENOMEDIR="${GENOMEDIR}/RSEM/"
 
-declare SUFFIX1=${SUFFIX_IN}
 declare SUFFIX_out="_trimmed${SUFFIX_IN}"
 
-echo "Intializing directories..."
-mkdir -p ${TRIMM_DIR}
-mkdir -p ${QC_DIR_fastp}
-mkdir -p ${QC_DIR_multiQC}
-mkdir -p ${align_DIR}
-mkdir -p ${Quant_DIR}
-mkdir -p ${RSEM_GENOMEDIR}
-echo "Done."
+# Create directories
+mkdir -p ${TRIMM_DIR} ${QC_DIR_fastp} ${QC_DIR_multiQC} ${align_DIR} ${Quant_DIR} ${RSEM_GENOMEDIR}
 
-echo "Starting logging..."
-exec 3>&1 4>&2
-trap 'exec 2>&4 1>&3' 0 1 2 3
+# Logging
 mydate="$(date +'%d.%m.%Y.%H-%M')"
-exec 1>${OUTPUT_DIR}/log_${mydate}.out 2>&1
+exec > >(tee -a "${OUTPUT_DIR}/log_${mydate}.out") 2>&1
 
+echo "--- Starting Preprocessing for Project: ${project} ---"
 
 ##################################
 ### Trimming raw reads : Fastp ###
 ##################################
 
-# Trimming paired end reads  
 if [ ${SEQMODE} == "paired" ]; then
-	declare FILES1="${SOURCEDIR}*${PAIR1}${SUFFIX1}";
-	for FILENAME in ${FILES1[@]}; do
-	READ1=${FILENAME}	
-	READ2=${FILENAME:0:-${#SUFFIX1}-${#PAIR1}}${PAIR2}${SUFFIX1}
-	echo -e "[TRIMMING] fastp: [${READ1:${#SOURCEDIR}:-${#PAIR1}-${#SUFFIX1}}]"
-	#Prevent overwrite:
-	if [ -e ${TRIMM_DIR}${READ1:${#SOURCEDIR}:-${#SUFFIX1}}${SUFFIX_out}  ] && \
-	   [ -e ${TRIMM_DIR}${READ2:${#SOURCEDIR}:-${#SUFFIX1}}${SUFFIX_out}  ]; then
-		echo "Files exist, continuing"
-	else
-	fastp \
-	--in1 ${READ1} \
-	--in2 ${READ2} \
-	--out1 ${TRIMM_DIR}${READ1:${#SOURCEDIR}:-${#SUFFIX1}}${SUFFIX_out} \
-	--out2 ${TRIMM_DIR}${READ2:${#SOURCEDIR}:-${#SUFFIX1}}${SUFFIX_out} \
-	--json "${QC_DIR_fastp}${READ1:${#SOURCEDIR}:-${#SUFFIX1}-${#PAIR1}}PE_fastp.json" \
-	--html "${QC_DIR_fastp}${READ1:${#SOURCEDIR}:-${#SUFFIX1}-${#PAIR1}}PE_fastp.html" \
-	--cut_front --cut_front_window_size 1 \
-	--cut_front_mean_quality 3 \
-	--cut_tail \
-	--cut_tail_window_size 1 \
-	--cut_tail_mean_quality 3 \
-	--cut_right \
-	--cut_right_window_size 4 \
-	--cut_right_mean_quality 15 \
-	--length_required 36 \
-	--thread ${CPUs}
-	fi
-done; fi
+    echo "Checking for raw files in ${RAW_SAMPLE_DIR}..."
+    for READ1 in ${RAW_SAMPLE_DIR}*${PAIR1}${SUFFIX_IN}; do
+        [ -e "$READ1" ] || continue
+        FILENAME=$(basename "$READ1")
+        READ2="${RAW_SAMPLE_DIR}${FILENAME/${PAIR1}${SUFFIX_IN}/${PAIR2}${SUFFIX_IN}}"
+        SAMPLE_ID="${FILENAME%${PAIR1}${SUFFIX_IN}}"
+        
+        OUT1="${TRIMM_DIR}${SAMPLE_ID}${PAIR1}${SUFFIX_out}"
+        OUT2="${TRIMM_DIR}${SAMPLE_ID}${PAIR2}${SUFFIX_out}"
 
-################################
-#INFORMATION ON TRIMMING PROCESS
-#--cut_front --cut_front_window_size 1 --cut_front_mean_quality 3 == Trimmomatic  "LEADING:3"
-#--cut_tail --cut_tail_window_size 1 --cut_tail_mean_quality 3 == Trimmomatic  "TRAILING:3"
-#--cut_right --cut_right_window_size 4 --cut_right_mean_quality 15 == Trimmomatic  "SLIDINGWINDOW:4:15"
-
-#### If additional trimming is needed (see multiQCreport): 
-# add to R1: --trim_front1 {amount_bases} and/or --trim_tail1 {amount_bases}
-# add to R2: --trim_front2 {amount_bases} and/or --trim_tail2 {amount_bases}
+        if [ -f "$OUT1" ] && [ -f "$OUT2" ]; then
+            echo "[SKIP] Trimmed files for ${SAMPLE_ID} already exist."
+        else
+            echo "[TRIMMING] fastp: ${SAMPLE_ID}"
+            fastp --in1 "${READ1}" --in2 "${READ2}" --out1 "$OUT1" --out2 "$OUT2" \
+                --json "${QC_DIR_fastp}${SAMPLE_ID}PE_fastp.json" \
+                --html "${QC_DIR_fastp}${SAMPLE_ID}PE_fastp.html" \
+                --cut_front --cut_tail --cut_right --length_required 36 --thread ${CPU_FOR_OTHER}
+        fi
+    done
+fi
 
 ####################################################
-### Alignment of reads (paired end & single end) ###
+### Alignment : STAR ###
 ####################################################
+
+
 
 if [ ${SEQTYPE} == "RNASeq" ]; then
+    # Indexing
+    if [ "${GENOME_INDEX_ALREADY_AVAILABLE}" == "No" ]; then
+        echo "[INDEXING] STAR Genome Indexing starting..."
+        STAR --runMode genomeGenerate --genomeDir "${GENOMEDIR}" --genomeFastaFiles "${GENOME}" \
+             --sjdbGTFfile "${GTF}" --sjdbOverhang 99 --runThreadN ${CPU_FOR_OTHER} \
+             $( [ "$LARGE_GENOME" == "Yes" ] && echo "--genomeSAsparseD 1 --genomeChrBinNbits 15" )
+    fi
 
-#Indexing reference genome for STAR
-cd ${GENOMEDIR}
-if [ ${GenomeIndexDone} == "No" ]; then
-	if [ ${LargeGenome} == "Yes" ]; then
-		echo "Indexing Large(=Human) genome"
-		# additional parameters to save RAM usage: --genomeSAsparseD 1 --genomeChrBinNbits 15
-		STAR \
-		--runMode genomeGenerate \
-		--genomeDir ${GENOMEDIR} \
-		--genomeFastaFiles ${GENOME} \
-		--sjdbGTFfile ${GTF} \
-		--sjdbOverhang 99 \
-		--runThreadN ${CPUs} \
-		--genomeSAsparseD 1 \
-		--genomeChrBinNbits 15
-	else
-		echo "Indexing Small(=non-human) genome"
-		STAR \
-		--runMode genomeGenerate \
-		--genomeDir ${GENOMEDIR} \
-		--genomeFastaFiles ${GENOME} \
-		--sjdbGTFfile ${GTF} \
-		--sjdbOverhang 99 \
-		--runThreadN ${CPUs}
-	fi
-fi
-cd ${SOURCEDIR}
-
-
-# Aligning reads paired end
-if [ ${SEQMODE} == "paired" ]; then
-	declare FILES1=${OUTPUTDIR}*${PAIR1}*${SUFFIX1}		
-  for FILENAME in ${FILES1[@]}; do
-	READ1=${FILENAME:0:-${#SUFFIX1}}	
-	READ2=${FILENAME:0:-${#SUFFIX1}-(${#PAIR1}+8)}${PAIR2}"_trimmed"
-	#Prevent overwrite: 
-	if [ -e ${align_DIR}${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}Log.final.out  ]; then
-		echo "File exists, continuing"
-	else
-		echo -e "[ALIGNING] STAR : [${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}]"
-		if [[ "${SUFFIX1}" == *".gz" ]]; then
-			echo "gzipped file detected, using zcat to read"
-			STAR \
-			--runThreadN ${CPUs_align} \
-			--genomeDir ${GENOMEDIR} \
-			--readFilesIn "${READ1}${SUFFIX1}" "${READ2}${SUFFIX1}" \
-			--quantMode TranscriptomeSAM \
-			--readFilesCommand zcat \
-			--outFileNamePrefix ${align_DIR}${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}
-		else
-			echo "uncompressed FASTQ format detected"
-			STAR \
-			--runThreadN ${CPUs_align} \
-			--genomeDir ${GENOMEDIR} \
-			--readFilesIn "${READ1}${SUFFIX1}" "${READ2}${SUFFIX1}" \
-			--quantMode TranscriptomeSAM \
-			--outFileNamePrefix ${align_DIR}${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}
-		fi
-	fi
-done; fi
-
-#######################
-# QUANTIFICATION RSEM #
-#######################
-
-#Indexing reference genome for RSEM
-echo "Indexing genome"
-cd ${GENOMEDIR}
-if [ ${GenomeIndexRSEMDone} == "No" ]; then 
-	rsem-prepare-reference --gtf ${GTF} ${GENOME} ${RSEM_GENOMEDIR}${GenomeID}
-	GenomeIndexRSEMDone="Yes"
+    # Alignment
+    for R1_PATH in ${TRIMM_DIR}*${PAIR1}${SUFFIX_out}; do
+        [ -e "$R1_PATH" ] || continue
+        FILENAME=$(basename "$R1_PATH")
+        SAMPLE_ID="${FILENAME%${PAIR1}${SUFFIX_out}}"
+        R2_PATH="${TRIMM_DIR}${SAMPLE_ID}${PAIR2}${SUFFIX_out}"
+        
+        if [ -f "${align_DIR}${SAMPLE_ID}Log.final.out" ]; then
+            echo "[SKIP] Alignment for ${SAMPLE_ID} already exists."
+        else
+            echo "[ALIGNING] STAR: ${SAMPLE_ID}"
+            STAR --runThreadN ${CPU_FOR_ALIGNMENT} --genomeDir "${GENOMEDIR}" \
+                --readFilesIn "${R1_PATH}" "${R2_PATH}" \
+                --quantMode TranscriptomeSAM --readFilesCommand zcat \
+                --outFileNamePrefix "${align_DIR}${SAMPLE_ID}"
+        fi
+    done
 fi
 
-echo "Quantifying single end"
-cd ${SOURCEDIR}
-# Quantify reads single end
-if [ ${SEQMODE} == "single" ]; then
-	declare FILES1=${OUTPUTDIR}*${PAIR1}*${SUFFIX1}		
-for FILENAME in ${FILES1[@]}; do
-	READ1=${FILENAME:0:-${#SUFFIX1}}	
-	echo -e "[QUANTIFYING] RSEM : [${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}]" 
-	rsem-calculate-expression \
-	-p ${CPUs} \
-	--bam "${align_DIR}${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}Aligned.toTranscriptome.out.bam" \
-	--no-bam-output ${RSEM_GENOMEDIR}${GenomeID} ${Quant_DIR}${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}
-done;fi
+#######################
+### Quantification : RSEM ###
+#######################
 
-echo "Quantifying paired end"
-# Quantify reads paired end
-if [ ${SEQMODE} == "paired" ]; then
-	declare FILES1=${OUTPUTDIR}*${PAIR1}*${SUFFIX1}		
-for FILENAME in ${FILES1[@]}; do
-	READ1=${FILENAME:0:-${#SUFFIX1}}	
-	READ2=${FILENAME:0:-${#SUFFIX1}-(${#PAIR1}+8)}${PAIR2}"_trimmed"
-	echo -e "[QUANTIFYING] RSEM : [${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}]" 
-	rsem-calculate-expression \
-	-p ${CPUs} \
-	--paired-end \
-	--bam "${align_DIR}${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}Aligned.toTranscriptome.out.bam" \
-	--no-bam-output ${RSEM_GENOMEDIR}${GenomeID} ${Quant_DIR}${READ1:${#OUTPUTDIR}:-(${#PAIR1}+8)}
-done;fi
+# Indexing RSEM
+if [ "${RSEM_INDEX_ALREADY_AVAILABLE}" == "No" ]; then
+    echo "[INDEXING] RSEM Reference starting..."
+    rsem-prepare-reference --gtf "${GTF}" "${GENOME}" "${RSEM_GENOMEDIR}${GenomeID}"
+fi
 
-# Output summary file from RSEM results
-declare FILELIST=$(find ${Quant_DIR} -name "*genes.results"  -printf "%f\t")
-rsem-generate-data-matrix $FILELIST > ${Quant_DIR}/genes.data.tsv
-sed -i 's/\.genes.results//g' ${Quant_DIR}/genes.data.tsv
+# Quantifying
+for R1_PATH in ${TRIMM_DIR}*${PAIR1}${SUFFIX_out}; do
+    [ -e "$R1_PATH" ] || continue
+    FILENAME=$(basename "$R1_PATH")
+    SAMPLE_ID="${FILENAME%${PAIR1}${SUFFIX_out}}"
+    
+    if [ -f "${Quant_DIR}${SAMPLE_ID}.genes.results" ]; then
+        echo "[SKIP] RSEM for ${SAMPLE_ID} already exists."
+    else
+        echo "[QUANTIFYING] RSEM: ${SAMPLE_ID}"
+        rsem-calculate-expression -p ${CPU_FOR_OTHER} --paired-end \
+            --bam "${align_DIR}${SAMPLE_ID}Aligned.toTranscriptome.out.bam" \
+            --no-bam-output "${RSEM_GENOMEDIR}${GenomeID}" "${Quant_DIR}${SAMPLE_ID}"
+    fi
+done
 
-declare FILELIST=$(find ${Quant_DIR} -name "*isoforms.results"  -printf "%f\t")
-rsem-generate-data-matrix $FILELIST > ${Quant_DIR}/isoforms.data.tsv
-sed -i 's/\.genes.results//g' ${Quant_DIR}/isoforms.data.tsv
+# Summarize Results
+echo "Generating Data Matrix..."
+cd "${Quant_DIR}"
+rsem-generate-data-matrix *.genes.results > genes.data.tsv
+rsem-generate-data-matrix *.isoforms.results > isoforms.data.tsv
 
+#######################
+### Quality Control ###
+#######################
 
-#####################################################################
-### Quality control raw reads: Fastp + RSEM + STAR MultiQC report ###
-#####################################################################
+echo "Running MultiQC..."
+multiqc --cl-config "extra_fn_clean_exts: { '_fastp.json' }" "${BASEDIR}" \
+        --filename MultiQC_Report.html --outdir "${QC_DIR_multiQC}"
 
-# Running multiQC on fastp-output
-# multiqc ${QC_DIR_fastp} --filename MultiQC_Report.html --outdir ${QC_DIR_multiQC}
-multiqc --cl-config "extra_fn_clean_exts: { '_fastp.json' }" ${BASEDIR} --filename MultiQC_Report.html --outdir ${QC_DIR_multiQC}
-
-###################################################################################################
-
-conda env export > conda_environment.${mydate}.yml
-
-conda deactivate
-echo "Pre-processing of data complete."
+echo "Preprocessing complete."
